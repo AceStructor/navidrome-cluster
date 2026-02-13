@@ -1,0 +1,57 @@
+version: "3.9"
+
+networks:
+  music_internal:
+    internal: true
+  proxy:
+    driver: bridge
+
+volumes:
+  navidrome_data:
+
+services:
+  # -----------------------------
+  # Traefik Reverse Proxy (lokal)
+  # -----------------------------
+  traefik:
+    image: traefik:v3
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.websecure.address=:8443"
+      - "--log.level=INFO"
+      - "--entrypoints.web.address=:8080"          # optional für HTTP
+    ports:
+      - "8443:8443"
+      - "8080:8080"   # optional für HTTP
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy
+
+  # -----------------------------
+  # Navidrome Music Server
+  # -----------------------------
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - /music:/music:ro
+      - navidrome_data:/data
+    environment:
+      ND_MUSICFOLDER: /music
+      ND_DATAFOLDER: /data
+      ND_SCANSCHEDULE: "1h"
+      ND_LOGLEVEL: info
+      ND_SCROBBLE_ENABLED: "false"
+    networks:
+      - music_internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.navidrome.rule=Host(`localhost`)"
+      - "traefik.http.routers.navidrome.entrypoints=websecure"
+      - "traefik.http.services.navidrome.loadbalancer.server.port=4533"
