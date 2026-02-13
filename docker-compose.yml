@@ -37,7 +37,6 @@ services:
     image: deluan/navidrome:latest
     container_name: navidrome
     restart: unless-stopped
-    user: "1000:1000"
     volumes:
       - /music:/music:ro
       - navidrome_data:/data
