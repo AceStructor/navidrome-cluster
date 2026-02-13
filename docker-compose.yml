@@ -51,6 +51,6 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.navidrome.rule=Host(`localhost`)"
+      - "traefik.http.routers.navidrome.rule=Host(`localhost`) || Host(`localhost:8443`)"
       - "traefik.http.routers.navidrome.entrypoints=websecure"
       - "traefik.http.services.navidrome.loadbalancer.server.port=4533"
